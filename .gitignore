@@ -1,0 +1,9 @@
+.venv/
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+uploads/
+fragments/
+*.zip
+.env

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Ads Agency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Global Ads Agency</h1>
+            </div>
+            <div class="sidebar-menu">
+                <h3>Herramientas de Video</h3>
+                <ul>
+                    <li><a href="#dividir-historias" class="active">Dividir Historias</a></li>
+                </ul>
+            </div>
+        </aside>
+        <main class="content">
+            <header class="content-header">
+                <h2>Dividir Historias</h2>
+            </header>
+            <section id="dividir-historias" class="active-section">
+                <p class="section-description">Selecciona un video y la duración de los fragmentos para dividirlo.</p>
+                <div class="input-group">
+                    <label for="videoInput">Seleccionar Video:</label>
+                    <input type="file" id="videoInput" accept="video/*">
+                </div>
+                <div class="input-group">
+                    <label for="segmentDuration">Duración del fragmento (segundos):</label>
+                    <input type="number" id="segmentDuration" value="10">
+                </div>
+                <div class="button-container">
+                    <button id="splitButton" disabled>Dividir Video</button>
+                </div>
+                <div id="downloadArea">
+                    <h3>Descargar Fragmentos:</h3>
+                    <p id="downloadMessage"></p>
+                    <div class="button-container">
+                        <button id="downloadAllButton" disabled>Descargar Todos (ZIP)</button>
+                        <button id="downloadAllIndividual" disabled>Descargar Todos (Individual)</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Global Ads Agency</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
