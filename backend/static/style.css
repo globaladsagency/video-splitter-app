@@ -235,3 +235,35 @@ footer {
     position: fixed;
     bottom: 0;
 }
+/* Estilos para la barra de progreso */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin-top: 15px;
+    height: 25px; /* Altura de la barra */
+    overflow: hidden; /* Asegura que el contenido interno no se desborde */
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #4CAF50; /* Color verde */
+    border-radius: 5px;
+    text-align: center;
+    line-height: 25px; /* Centrar el texto verticalmente */
+    color: white;
+    font-weight: bold;
+    transition: width 0.3s ease-in-out; /* Animación suave al cambiar el ancho */
+    position: absolute; /* Para que el texto se superponga */
+    top: 0;
+    left: 0;
+    white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+}
+
+#progressMessage {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #333;
+}
