@@ -1,210 +1,209 @@
 import os
 import time
-import shutil
-import glob
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, render_template
-from moviepy.editor import VideoFileClip, CompositeVideoClip, concatenate_videoclips
-from werkzeug.utils import secure_filename
+import zipfile
 import threading
-import queue # Importamos la librería queue para la comunicación entre hilos
-import sys # Para manejar la salida estándar
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for, render_template # Eliminado flash, session, UserMixin etc. si no se usan
+from flask_cors import CORS
+from moviepy.editor import VideoFileClip
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__, static_folder='../static', template_folder='../templates')
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['FRAGMENT_FOLDER'] = 'fragments'
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 500  # 500 MB limit
+# --- Inicialización de la Aplicación Flask ---
+# Flask buscará 'templates' y 'static' en la misma carpeta que este server.py por defecto.
+# Ya que server.py está en 'backend/', estas carpetas deben estar dentro de 'backend/'.
+app = Flask(__name__)
+CORS(app) # Habilitar CORS para permitir solicitudes desde el frontend
 
-# Crear las carpetas si no existen
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['FRAGMENT_FOLDER'], exist_ok=True)
+# Configuración de la clave secreta para la sesión de Flask.
+# Aunque tu aplicación actual no usa sesiones de Flask, es buena práctica tenerla.
+# ¡ADVERTENCIA!: En un entorno de producción REAL, NUNCA debes hardcodear
+# la clave secreta directamente en el código como aquí.
+# Siempre cárgala desde una variable de entorno para mayor seguridad.
+app.secret_key = 'Ryuk1998*' # CAMBIA ESTO
 
-# Cola para enviar mensajes de progreso al cliente (para SSE)
-progress_queue = queue.Queue()
+# --- Configuraciones de Carpetas ---
+# Estas rutas son relativas al directorio donde se ejecuta server.py,
+# que con el `--chdir backend` de Gunicorn, será la carpeta 'backend'.
+UPLOAD_FOLDER = 'uploads'
+OUTPUT_FOLDER = 'fragments'
+ALLOWED_EXTENSIONS = {'mp4', 'webm', 'ogg'}
 
-# --- Funciones de limpieza automática ---
-def clean_old_files():
-    print("Iniciando el servicio de limpieza automática de archivos...")
-    while True:
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+
+# Asegurarse de que las carpetas existan al iniciar la aplicación.
+# Se crearán dentro de 'backend/' gracias al --chdir de Gunicorn.
+os.makedirs(os.path.join(os.getcwd(), UPLOAD_FOLDER), exist_ok=True)
+os.makedirs(os.path.join(os.getcwd(), OUTPUT_FOLDER), exist_ok=True)
+
+# --- INICIO DE CÓDIGO DE LIMPIEZA AUTOMÁTICA ---
+CLEANUP_INTERVAL_SECONDS = 3600  # 1 hora (3600 segundos) para producción
+FILE_LIFETIME_SECONDS = 3600     # 1 hora para archivos
+_cleanup_thread_started = False 
+
+def cleanup_files():
+    with app.app_context(): # Asegura que la función se ejecute dentro del contexto de la app Flask
         now = time.time()
-        # Limpiar la carpeta de uploads
-        for filename in os.listdir(app.config['UPLOAD_FOLDER']):
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > 3600: # Archivos de más de 1 hora
+        
+        # Rutas completas a las carpetas (relativas al directorio de trabajo actual)
+        full_upload_path = os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER'])
+        full_output_path = os.path.join(os.getcwd(), app.config['OUTPUT_FOLDER'])
+
+        for folder_path in [full_upload_path, full_output_path]:
+            if os.path.exists(folder_path):
+                for filename in os.listdir(folder_path):
+                    filepath = os.path.join(folder_path, filename)
+                    if os.path.isfile(filepath): # Solo si es un archivo (no subcarpetas)
+                        file_age = now - os.path.getmtime(filepath)
+                        if file_age > FILE_LIFETIME_SECONDS:
+                            try:
+                                os.remove(filepath)
+                                print(f"Limpieza: Eliminado archivo antiguo de {os.path.basename(folder_path)}: {filename}")
+                            except Exception as e:
+                                print(f"Limpieza: Error al eliminar {filename} de {os.path.basename(folder_path)}: {e}")
+                            
+        # Limpiar el archivo ZIP principal (fragmentos.zip)
+        # Este archivo se crea en el directorio de trabajo actual (backend/)
+        zip_path = os.path.join(os.getcwd(), 'fragmentos.zip')
+        if os.path.exists(zip_path) and os.path.isfile(zip_path):
+            file_age = now - os.path.getmtime(zip_path)
+            if file_age > FILE_LIFETIME_SECONDS:
                 try:
-                    os.remove(filepath)
-                    print(f"Archivo antiguo eliminado: {filepath}")
+                    os.remove(zip_path)
+                    print(f"Limpieza: Eliminado archivo ZIP antiguo: {zip_path}")
                 except Exception as e:
-                    print(f"Error al eliminar archivo antiguo {filepath}: {e}")
+                    print(f"Limpieza: Error al eliminar {zip_path}: {e}")
 
-        # Limpiar la carpeta de fragments
-        for filename in os.listdir(app.config['FRAGMENT_FOLDER']):
-            filepath = os.path.join(app.config['FRAGMENT_FOLDER'], filename)
-            if os.path.isfile(filepath) and now - os.path.getmtime(filepath) > 3600: # Archivos de más de 1 hora
-                try:
-                    os.remove(filepath)
-                    print(f"Fragmento antiguo eliminado: {filepath}")
-                except Exception as e:
-                    print(f"Error al eliminar fragmento antiguo {filepath}: {e}")
+    # Programa la próxima ejecución de la limpieza
+    threading.Timer(CLEANUP_INTERVAL_SECONDS, cleanup_files).start()
 
-        time.sleep(3600) # Esperar 1 hora antes de la próxima limpieza
+def start_cleanup_thread():
+    global _cleanup_thread_started
+    # Solo inicia el hilo si no se ha iniciado ya y si no es el proceso de recarga de Flask en modo debug
+    if not _cleanup_thread_started and (not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true"):
+        print("Iniciando el servicio de limpieza automática de archivos...")
+        # Llama a cleanup_files() por primera vez para iniciar el ciclo
+        threading.Timer(CLEANUP_INTERVAL_SECONDS, cleanup_files).start()
+        _cleanup_thread_started = True
 
-# Iniciar el hilo de limpieza
-cleaner_thread = threading.Thread(target=clean_old_files, daemon=True)
-cleaner_thread.start()
+# Inicia el hilo de limpieza cuando la aplicación se carga en Gunicorn (producción)
+# o en el proceso principal de Werkzeug (desarrollo con debug=True)
+start_cleanup_thread()
+# --- FIN DE CÓDIGO DE LIMPIEZA AUTOMÁTICA ---
 
-# --- Función de procesamiento de video ---
-def split_video(video_path, segment_duration, queue_ref): # Añadimos queue_ref
-    fragment_filenames = []
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def split_video(video_path, segment_duration):
     try:
         clip = VideoFileClip(video_path)
-        total_duration = clip.duration
-        num_segments = int(total_duration / segment_duration)
+        duration = clip.duration
+        fragment_filenames = []
+        start_time = 0
+        fragment_index = 1
 
-        queue_ref.put(f"message: Duración total del video: {total_duration:.2f} segundos. Se crearán {num_segments} fragmentos.")
-
-        for i in range(num_segments):
-            start_time = i * segment_duration
-            end_time = (i + 1) * segment_duration
-            
-            # Asegurarse de no exceder la duración total del video para el último segmento
-            if end_time > total_duration:
-                end_time = total_duration
-
-            fragment_path = os.path.join(app.config['FRAGMENT_FOLDER'], f"fragment_{i+1}_{segment_duration}.mp4")
-            fragment_filenames.append(os.path.basename(fragment_path))
-
+        while start_time < duration:
+            end_time = min(start_time + segment_duration, duration)
             subclip = clip.subclip(start_time, end_time)
-            
-            # === AQUI ESTÁ EL CAMBIO CLAVE PARA EL PROGRESO ===
-            def progress_callback(t):
-                percentage = (t / (end_time - start_time)) * 100
-                queue_ref.put(f"progress: {percentage:.2f}") # Enviar el progreso del fragmento actual
-                sys.stdout.flush() # Asegurar que la salida se envíe inmediatamente
+            fragment_filename = f"fragment_{fragment_index}.mp4"
+            fragment_path = os.path.join(app.config['OUTPUT_FOLDER'], fragment_filename)
+            subclip.write_videofile(fragment_path, codec="libx264", audio_codec="aac")
+            fragment_filenames.append(fragment_filename)
+            start_time += segment_duration
+            fragment_index += 1
 
-            print(f"Moviepy - Building video {fragment_path} (segment {i+1}/{num_segments}).")
-            queue_ref.put(f"message: Procesando fragmento {i+1} de {num_segments}...")
-            
-            subclip.write_videofile(
-                fragment_path,
-                codec="libx264",
-                audio_codec="aac",
-                fps=24, # Mantener un fps fijo para consistencia, o usar clip.fps
-                temp_audiofile=f"{fragment_path}_temp_audio.mp3", # Agregamos un archivo temporal para el audio
-                logger='bar', # Usa la barra de progreso de moviepy en la consola del servidor
-                # progress_callback=progress_callback # Habilitar si quieres progreso por cada subclip
-            )
-            # Moviepy imprime su propia barra de progreso. Para enviar progreso general:
-            overall_percentage = ((i + 1) / num_segments) * 100
-            queue_ref.put(f"overall_progress: {overall_percentage:.2f}") # Enviar el progreso general
-            print(f"Moviepy - Finished fragment {i+1} of {num_segments}.")
-
-
-        clip.close() # Es importante cerrar el clip para liberar recursos
-        print(f"Moviepy - All fragments built.")
-        queue_ref.put("message: Todos los fragmentos creados. Generando enlace de descarga...")
-
+        clip.close()
+        return fragment_filenames
     except Exception as e:
-        queue_ref.put(f"error: Error al procesar el video: {str(e)}")
         print(f"Error al procesar el video: {e}")
-        return []
+        return None
 
-    finally:
-        # Intentar eliminar el archivo original después de procesar
-        # Se añadió un pequeño retardo y un try-except por el error de Windows 32
-        time.sleep(2) # Dar tiempo al sistema operativo para liberar el archivo
-        try:
-            if os.path.exists(video_path):
-                os.remove(video_path)
-                print(f"Archivo original '{os.path.basename(video_path)}' eliminado.")
-            else:
-                print(f"Archivo original '{os.path.basename(video_path)}' ya no existe.")
-        except Exception as e:
-            print(f"Error al eliminar el archivo original '{os.path.basename(video_path)}': {e}")
-    
-    return fragment_filenames
-
-# --- Rutas de Flask ---
+# --- Ruta para servir el Frontend (la página principal) ---
 @app.route('/')
 def index():
+    """
+    Sirve el archivo HTML principal de tu aplicación frontend.
+    Flask lo buscará en la carpeta 'templates' por defecto.
+    """
     return render_template('index.html')
+
+# --- Rutas de la API de tu Aplicación ---
 
 @app.route('/api/split_video', methods=['POST'])
 def upload_and_split():
     if 'video' not in request.files:
-        return jsonify({"error": "No se proporcionó ningún archivo de video."}), 400
-
-    video_file = request.files['video']
-    if video_file.filename == '':
-        return jsonify({"error": "No se seleccionó ningún archivo."}), 400
-
-    if video_file:
-        filename = secure_filename(video_file.filename)
+        return jsonify({'error': 'No se proporcionó ningún archivo de video'}), 400
+    file = request.files['video']
+    if file.filename == '':
+        return jsonify({'error': 'No se seleccionó ningún archivo'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
         video_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        video_file.save(video_path)
+        file.save(video_path)
+        segment_duration = int(request.form.get('segment_duration', 3))
 
+        fragment_filenames = split_video(video_path, segment_duration)
+
+        time.sleep(2) # Pequeña pausa para asegurar la escritura del archivo
         try:
-            segment_duration = float(request.form.get('segment_duration'))
-        except (ValueError, TypeError):
-            return jsonify({"error": "Duración del segmento inválida."}), 400
+            os.remove(video_path) 
+            print(f"Video original '{filename}' eliminado después del procesamiento.")
+        except Exception as e:
+            print(f"Error al eliminar el archivo original '{filename}': {e}")
+            pass
 
-        # Vaciar la cola para un nuevo proceso
-        while not progress_queue.empty():
-            try:
-                progress_queue.get_nowait()
-            except queue.Empty:
-                break
-        
-        # Iniciar el procesamiento en un hilo separado
-        # La función de procesamiento ahora recibe la cola para enviar updates
-        threading.Thread(target=lambda: split_video(video_path, segment_duration, progress_queue)).start()
-        
-        return jsonify({"message": "Procesamiento iniciado. Conéctate a /api/progress para actualizaciones."}), 202
+        if fragment_filenames:
+            # ¡IMPORTANTE!: Usar url_for para generar URLs que funcionen en Render
+            # _external=True generará la URL completa con el dominio del despliegue
+            fragment_urls = [url_for('download_fragment', filename=fname, _external=True) for fname in fragment_filenames]
+            return jsonify({'fragment_urls': fragment_urls, 'fragment_filenames': fragment_filenames}), 200
+        else:
+            return jsonify({'error': 'Error al dividir el video'}), 500
+    else:
+        return jsonify({'error': 'Formato de archivo no permitido'}), 400
 
-@app.route('/api/progress')
-def progress():
-    def generate():
-        while True:
-            try:
-                msg = progress_queue.get(timeout=1) # Esperar un mensaje hasta 1 segundo
-                yield f"data: {msg}\n\n"
-                if msg.startswith("overall_progress: 100.00") or msg.startswith("error:"):
-                    break # Terminar la conexión cuando el proceso termine o haya un error
-            except queue.Empty:
-                # No hay mensajes, continuar esperando
-                pass
-            except Exception as e:
-                print(f"Error en el stream de progreso: {e}")
-                yield f"data: error: Error en el stream de progreso: {str(e)}\n\n"
-                break
-            
-    return app.response_class(generate(), mimetype='text/event-stream')
+@app.route('/download_fragment/<filename>')
+def download_fragment(filename):
+    # send_from_directory servirá el archivo desde la carpeta OUTPUT_FOLDER
+    # que está dentro de backend/ (gracias a `--chdir backend` de Gunicorn)
+    return send_from_directory(app.config['OUTPUT_FOLDER'], filename, as_attachment=True)
+
+@app.route('/api/download_all', methods=['POST'])
+def download_all_fragments():
+    data = request.get_json()
+    if not data or 'filenames' not in data or not isinstance(data['filenames'], list):
+        return jsonify({'error': 'Lista de nombres de archivo no válida'}), 400
+
+    filenames = data['filenames']
+    # El archivo ZIP se creará en el directorio de trabajo actual (backend/)
+    zip_path = 'fragmentos.zip' 
+    zipf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    for filename in filenames:
+        filepath = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+        if os.path.exists(filepath):
+            zipf.write(filepath, filename)
+    zipf.close()
+
+    # Sirve el archivo ZIP desde el directorio de trabajo actual (backend/)
+    return send_from_directory(os.getcwd(), 'fragmentos.zip', as_attachment=True)
+
+# --- Manejo de Errores (Opcional, pero recomendado para producción) ---
+@app.errorhandler(404)
+def page_not_found(e):
+    return jsonify(error="Ruta no encontrada", message="La URL solicitada no existe."), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    # En un entorno de producción, no exponer detalles internos del error directamente.
+    return jsonify(error="Error interno del servidor", message="Algo salió mal en el servidor."), 500
 
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    return send_from_directory(app.config['FRAGMENT_FOLDER'], filename, as_attachment=True)
-
-@app.route('/list_fragments/<segment_duration>')
-def list_fragments(segment_duration):
-    try:
-        # Filtra solo los archivos que coincidan con el patrón de segment_duration
-        # Asegúrate de que los archivos se nombren consistentemente como fragment_{i+1}_{segment_duration}.mp4
-        pattern = f"fragment_*_{segment_duration}.mp4"
-        fragment_files = [f for f in os.listdir(app.config['FRAGMENT_FOLDER']) if f.startswith(f"fragment_") and f.endswith(f"_{segment_duration}.mp4")]
-        
-        # Puedes querer ordenar los fragmentos numéricamente si es necesario
-        fragment_files.sort(key=lambda x: int(x.split('_')[1]))
-
-        if not fragment_files:
-            return jsonify({"message": "No se encontraron fragmentos para esta duración.", "fragments": []}), 404
-        
-        # Generar URLs de descarga
-        fragment_urls = [url_for('download_file', filename=f) for f in fragment_files]
-        return jsonify({"fragments": fragment_urls})
-
-    except Exception as e:
-        print(f"Error al listar fragmentos: {e}")
-        return jsonify({"error": f"Error al listar fragmentos: {e}"}), 500
-
+# --- Ejecución del Servidor (Solo para desarrollo local) ---
+# Este bloque de código solo se ejecuta cuando corres `python server.py`
+# directamente en tu máquina local. Render (Gunicorn) se encarga de iniciar
+# la aplicación por sí mismo, por lo que esta sección será ignorada en Render.
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Flask tomará el puerto de la variable de entorno 'PORT' de Render,
+    # o usará el puerto 5000 si se ejecuta localmente.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
