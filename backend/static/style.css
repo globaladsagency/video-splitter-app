@@ -1,359 +1,82 @@
+/* Reinicia algunos estilos por si acaso, aunque Bootstrap ya trae un reset */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
     margin: 0;
     padding: 0;
-    background-color: #f4f6f8; /* Gris claro de fondo */
-    color: #333; /* Texto principal oscuro */
-    display: flex;
-    min-height: 100vh;
-    align-items: center; /* Centrar verticalmente el contenedor principal */
-    justify-content: center; /* Centrar horizontalmente el contenedor principal */
 }
 
-.container {
-    display: flex;
-    width: 90%; /* Ancho máximo para centrar el contenido */
-    max-width: 1200px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 20px; /* Espacio alrededor del contenedor */
-}
-
-.sidebar {
-    width: 280px;
-    background-color: #2c3e50; /* Azul grisáceo oscuro para el sidebar */
+/* Estilos personalizados para el Sidebar (si quieres mantener colores específicos, etc.) */
+.sidebar-custom {
+    background-color: #2c3e50 !important; /* Usamos !important para asegurar que sobrescribe Bootstrap */
     color: #fff;
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centrar contenido del sidebar */
 }
 
-.sidebar-header {
-    margin-bottom: 40px;
-    text-align: center;
+.sidebar-custom .nav-link.active {
+    background-color: #34495e !important; /* Color de fondo para el ítem activo del menú */
+    border-radius: 0.375rem; /* El radio de Bootstrap */
 }
 
-.sidebar-header h1 {
-    font-size: 2em;
-    color: #3498db; /* Azul vibrante como acento */
-    margin: 0;
-}
-
-.sidebar-menu {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.sidebar-menu h3 {
-    color: #ddd;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.sidebar-menu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-}
-
-.sidebar-menu ul li {
-    margin-bottom: 15px;
-}
-
-.sidebar-menu ul li a {
-    color: #fff;
-    text-decoration: none;
-    padding: 12px 20px;
-    border-radius: 5px;
-    display: block;
-    transition: background-color 0.3s ease;
-}
-
-.sidebar-menu ul li a:hover {
-    background-color: #3498db15; /* Fondo suave al pasar el ratón */
-    color: #3498db;
-}
-
-.sidebar-menu ul li a.active {
-    background-color: #3498db20; /* Fondo suave para el enlace activo */
-    color: #3498db;
+/* Estilos para el título "Global Ads Agency" en el sidebar si quieres algo específico */
+.sidebar-custom .fs-5 {
     font-weight: bold;
+    color: #ecf0f1; /* Un color ligeramente diferente */
 }
 
+/* Ajustes para el contenido principal si lo necesitas, aunque Bootstrap ya maneja mucho */
 .content {
-    flex-grow: 1;
-    padding: 40px;
     background-color: #fff;
-    border-left: 1px solid #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centrar contenido principal */
+    border-left: 1px solid #eee; /* Mantener el borde del sidebar si te gusta */
 }
 
-.content-header {
-    margin-bottom: 30px;
-    text-align: center;
-}
-
-.content-header h2 {
-    color: #3498db;
-    margin: 0;
-    font-size: 2.5em;
-}
-
-main section {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 30px;
-    margin-bottom: 30px;
-    width: 80%; /* Ancho del contenido principal */
-    max-width: 700px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.section-description {
-    color: #777;
-    line-height: 1.7;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.input-group {
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-label {
-    display: block;
-    margin-bottom: 8px;
-    color: #555;
-    font-weight: bold;
-    text-align: left;
-}
-
-input[type="file"],
-input[type="number"] {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #fff;
-    color: #333;
-    box-sizing: border-box;
-    width: 100%;
-    font-size: 1em;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    gap: 15px; /* Espacio entre los botones */
-    margin-top: 20px;
-}
-
-button {
-    padding: 14px 30px;
-    background-color: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
-
-button:disabled {
-    background-color: #ddd;
-    color: #777;
-    cursor: not-allowed;
-}
-
-#downloadArea {
-    margin-top: 40px;
-    padding: 30px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #eee;
-    text-align: center;
-    width: 80%;
-    max-width: 700px;
-}
-
-#downloadArea h3 {
-    color: #3498db;
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.5em;
-}
-
-#downloadMessage {
-    margin-top: 15px;
-    font-style: italic;
-    color: #777;
-}
-
-#downloadAllButton,
-#downloadAllIndividual {
-    padding: 14px 30px;
-    background-color: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.3s ease;
-}
-
-#downloadAllButton:hover,
-#downloadAllIndividual:hover {
-    background-color: #2980b9;
-}
-
-#downloadAllButton:disabled,
-#downloadAllIndividual:disabled {
-    background-color: #ddd;
-    color: #777;
-    cursor: not-allowed;
-}
-
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #2c3e50;
-    color: #fff;
-    width: 100%;
-    position: fixed;
-    bottom: 0;
-}
-/* ... tus estilos existentes ... */
-
-/* Estilos para la barra de progreso */
-.progress-container {
-    margin-top: 20px;
-    text-align: center;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-.progress-container p {
-    margin-bottom: 10px;
-    font-weight: bold;
-    color: #333;
-}
-
-.progress-bar-background {
-    width: 100%;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    overflow: hidden;
-    height: 25px; /* Altura de la barra de progreso */
-    margin-bottom: 10px;
-    position: relative;
-}
-
+/* Barra de Progreso - Bootstrap tiene sus propias clases, pero si quieres color específico */
 .progress-bar {
-    height: 100%;
-    width: 0%;
-    background-color: #007bff; /* Color azul para la barra */
+    background-color: #007bff; /* Color azul de Bootstrap por defecto, puedes cambiarlo aquí */
     color: white;
-    text-align: center;
-    line-height: 25px; /* Centra el texto verticalmente */
-    border-radius: 5px;
-    transition: width 0.3s ease-in-out; /* Transición suave del ancho */
     font-weight: bold;
-    white-space: nowrap; /* Evita que el texto se rompa */
-    overflow: hidden; /* Oculta el texto si la barra es muy pequeña */
-}
-
-.overall-progress-text {
-    font-size: 0.9em;
-    color: #666;
-}
-
-/* ... y los estilos para los botones de descarga ... */
-#downloadAllButton,
-#downloadAllIndividual {
-    padding: 14px 30px;
-    background-color: #3498db;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1em;
-    transition: background-color 0.3s ease;
-}
-
-#downloadAllButton:hover,
-#downloadAllIndividual:hover {
-    background-color: #2980b9;
-}
-
-#downloadAllButton:disabled,
-#downloadAllIndividual:disabled {
-    background-color: #ddd;
-    color: #777;
-    cursor: not-allowed;
-}
-/* --- */
-/* Estilos para la Matriz de Vistas Previas de Fragmentos */
-.fragment-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* 3-4 columnas responsivas */
-    gap: 20px; /* Espacio entre los elementos de la cuadrícula */
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 8px;
     text-align: center;
 }
 
-.fragment-item {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between; /* Espacio entre imagen/video y nombre */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Mensajes de estado - Bootstrap tiene .alert-info, .alert-success, .alert-danger */
+/* Puedes mantener tus propios colores si quieres que sean diferentes */
+.alert.info {
+    background-color: #e7f3fe; /* Azul claro */
+    color: #0c5460;
+    border-color: #bee5eb;
+}
+.alert.success {
+    background-color: #d4edda; /* Verde claro */
+    color: #155724;
+    border-color: #c3e6cb;
+}
+.alert.error {
+    background-color: #f8d7da; /* Rojo claro */
+    color: #721c24;
+    border-color: #f5c6cb;
 }
 
-.fragment-item:hover {
+/* Estilos para la vista previa de fragmentos (ajusta el aspecto de las cards de Bootstrap) */
+.fragment-grid .card { /* Bootstrap usa .card por defecto para elementos como estos */
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+
+.fragment-grid .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.fragment-item video,
-.fragment-item img { /* Si en el futuro agregas imágenes como thumbnails */
+.fragment-grid .card video {
     max-width: 100%;
     height: auto;
     border-radius: 4px;
     margin-bottom: 10px;
 }
 
-.fragment-item a {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: bold;
-    word-break: break-word; /* Para nombres de archivo largos */
-    padding: 5px 0;
-}
-
-.fragment-item a:hover {
-    text-decoration: underline;
+/* Puedes eliminar la mayoría de tus reglas responsive anteriores, ya que Bootstrap las maneja */
+/* Si tenías reglas específicas para el footer, ajústalas a las nuevas clases de Bootstrap */
+footer p {
+    font-size: 0.9em;
 }

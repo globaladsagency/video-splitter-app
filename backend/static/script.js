@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
         const splitButton = document.getElementById('splitButton');
         const statusMessage = document.getElementById('statusMessage');
-        // const fragmentList = document.getElementById('fragmentList'); // Ya no usaremos este para los enlaces directos
         const progressContainer = document.getElementById('progressContainer');
         const progressMessage = document.getElementById('progressMessage');
         const progressBar = document.getElementById('progressBar');
@@ -20,18 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const downloadArea = document.getElementById('downloadArea'); 
         const downloadButtonsContainer = document.getElementById('downloadButtons'); 
         const downloadMessage = document.getElementById('downloadMessage'); 
-        const fragmentPreviewsContainer = document.getElementById('fragmentPreviews'); // NUEVO: Contenedor de vistas previas
+        const fragmentPreviewsContainer = document.getElementById('fragmentPreviews');
 
         // Resetear UI al inicio de un nuevo procesamiento
         statusMessage.textContent = 'Iniciando procesamiento...';
-        statusMessage.className = 'message info';
-        // fragmentList.innerHTML = ''; // Limpiar lista de fragmentos anteriores (si la usabas)
-        fragmentPreviewsContainer.innerHTML = ''; // Limpiar vistas previas anteriores
-        downloadButtonsContainer.innerHTML = ''; // Limpiar botones de descarga anteriores (se recrearán)
-        splitButton.disabled = true; // Deshabilitar botón de dividir
-        downloadArea.style.display = 'none'; // Ocultar área de descarga
-        downloadButtonsContainer.style.display = 'none'; // Ocultar contenedor de botones
-        downloadMessage.style.display = 'none'; // Ocultar mensaje de descarga
+        statusMessage.className = 'alert alert-info'; // Clases de Bootstrap para alertas
+        fragmentPreviewsContainer.innerHTML = ''; 
+        downloadButtonsContainer.innerHTML = ''; 
+        splitButton.disabled = true; 
+        downloadArea.style.display = 'none'; 
+        downloadMessage.style.display = 'none'; 
 
         // Mostrar contenedor de progreso e inicializar
         progressContainer.style.display = 'block';
@@ -39,6 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.textContent = '0%';
         overallProgressText.textContent = '0% Completado';
         progressMessage.textContent = 'Preparando...';
+
+        // Asegurarse de que la barra de progreso de Bootstrap está lista
+        progressBar.setAttribute('aria-valuenow', '0');
+
 
         try {
             const response = await fetch('/api/split_video', {
@@ -49,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 const errorData = await response.json();
                 statusMessage.textContent = `Error al iniciar el procesamiento: ${errorData.error || 'Desconocido'}`;
-                statusMessage.className = 'message error';
-                progressContainer.style.display = 'none'; // Ocultar barra de progreso en caso de error inicial
+                statusMessage.className = 'alert alert-danger'; // Clases de Bootstrap para alertas
+                progressContainer.style.display = 'none';
                 splitButton.disabled = false;
                 return;
             }
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 buffer += decoder.decode(value, { stream: true });
                 const events = buffer.split('\n\n');
-                buffer = events.pop(); // Guarda la última parte incompleta
+                buffer = events.pop();
 
                 for (const eventString of events) {
                     if (eventString.startsWith('data:')) {
@@ -81,15 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             percentage = Math.max(0, Math.min(100, percentage)); 
                             progressBar.style.width = `${percentage}%`;
                             progressBar.textContent = `${percentage.toFixed(0)}%`; 
+                            progressBar.setAttribute('aria-valuenow', percentage.toFixed(0)); // Actualiza el atributo aria-valuenow
                             overallProgressText.textContent = `${percentage.toFixed(0)}% Completado`;
                             
                             if (percentage >= 100) {
                                 statusMessage.textContent = 'Proceso completado. Obteniendo fragmentos...';
-                                statusMessage.className = 'message success';
+                                statusMessage.className = 'alert alert-success'; // Clases de Bootstrap para alertas
                             }
                         } else if (data.startsWith('error:')) {
                             statusMessage.textContent = `Error durante el procesamiento: ${data.substring(6).trim()}`;
-                            statusMessage.className = 'message error';
+                            statusMessage.className = 'alert alert-danger'; // Clases de Bootstrap para alertas
                             progressContainer.style.display = 'none';
                             reader.cancel(); 
                             break; 
@@ -98,34 +100,45 @@ document.addEventListener('DOMContentLoaded', () => {
                             try {
                                 const fragments = JSON.parse(fragmentsJsonString);
                                 if (fragments && fragments.length > 0) {
-                                    // fragmentList.innerHTML = ''; // Ya no usamos esto
-                                    fragmentPreviewsContainer.innerHTML = ''; // Limpiar por si acaso
+                                    fragmentPreviewsContainer.innerHTML = ''; 
                                     downloadArea.style.display = 'block'; 
                                     downloadMessage.style.display = 'block'; 
 
                                     // Crear las vistas previas de los fragmentos en la matriz
-                                    fragments.forEach(url => {
+                                    fragments.forEach((url, index) => { // Asegúrate de incluir 'index' aquí
                                         const fragmentItem = document.createElement('div');
-                                        fragmentItem.className = 'fragment-item';
+                                        fragmentItem.className = 'col'; // Clase de Bootstrap para columna
+
+                                        const cardDiv = document.createElement('div');
+                                        cardDiv.className = 'card h-100'; // Clases de Bootstrap para la tarjeta
 
                                         const videoElement = document.createElement('video');
                                         videoElement.src = url;
-                                        videoElement.controls = true; // Permite reproducir
-                                        videoElement.preload = 'metadata'; // Carga solo metadatos para vista previa
+                                        videoElement.controls = true; 
+                                        videoElement.preload = 'metadata'; 
+                                        videoElement.className = 'card-img-top'; // Clase de Bootstrap para imágenes/videos en cards
                                         videoElement.style.maxWidth = '100%';
                                         videoElement.style.height = 'auto';
                                         
-                                        // Opcional: Si quieres un thumbnail en lugar del video completo,
-                                        // podrías pedir a FFmpeg que genere uno y usar <img> aquí.
-                                        // Por ahora, usamos el propio <video> con controls.
+                                        const cardBodyDiv = document.createElement('div');
+                                        cardBodyDiv.className = 'card-body d-flex flex-column justify-content-between'; // Clases de Bootstrap
+
+                                        // --- Lógica para el nombre del fragmento ---
+                                        const partNumber = index + 1; // Para que empiece en 1, no en 0
+                                        const displayFileName = `Parte ${partNumber}`; // Texto para mostrar al usuario (ej. "Parte 1")
+                                        const actualFileName = url.split('/').pop(); // Nombre original para la descarga (ej. "fragment_1.mp4")
+                                        // ------------------------------------------
 
                                         const downloadLink = document.createElement('a');
                                         downloadLink.href = url;
-                                        downloadLink.textContent = url.split('/').pop(); // Muestra solo el nombre del archivo
-                                        downloadLink.download = url.split('/').pop(); // Para la descarga
+                                        downloadLink.textContent = displayFileName; // Usa el texto amigable
+                                        downloadLink.download = actualFileName; // Mantiene el nombre original para la descarga
+                                        downloadLink.className = 'btn btn-sm btn-outline-secondary mt-auto'; // Clases de Bootstrap para el botón de descarga
 
-                                        fragmentItem.appendChild(videoElement);
-                                        fragmentItem.appendChild(downloadLink);
+                                        cardBodyDiv.appendChild(downloadLink);
+                                        cardDiv.appendChild(videoElement);
+                                        cardDiv.appendChild(cardBodyDiv);
+                                        fragmentItem.appendChild(cardDiv);
                                         fragmentPreviewsContainer.appendChild(fragmentItem);
                                     });
 
@@ -134,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const downloadAllZipBtn = document.createElement('button');
                                     downloadAllZipBtn.id = 'downloadAllButton'; 
                                     downloadAllZipBtn.textContent = 'Descargar Todos (ZIP)';
+                                    downloadAllZipBtn.className = 'btn btn-primary'; // Clases de Bootstrap para botones
                                     downloadAllZipBtn.addEventListener('click', async () => {
                                         const filenames = fragments.map(url => url.split('/').pop());
                                         try {
@@ -167,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const downloadAllIndividualBtn = document.createElement('button');
                                     downloadAllIndividualBtn.id = 'downloadAllIndividual'; 
                                     downloadAllIndividualBtn.textContent = 'Descargar Todos Individualmente';
+                                    downloadAllIndividualBtn.className = 'btn btn-secondary'; // Clases de Bootstrap para botones
                                     downloadAllIndividualBtn.addEventListener('click', () => {
                                         alert('La descarga de fragmentos individuales ha comenzado. Revisa tu carpeta de descargas.');
                                         fragments.forEach(url => {
@@ -180,16 +195,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     });
                                     downloadButtonsContainer.appendChild(downloadAllIndividualBtn);
                                     
-                                    downloadButtonsContainer.style.display = 'flex'; // Mostrar el contenedor de botones
-                                    
                                 } else {
                                     statusMessage.textContent = 'Proceso completado, pero no se generaron fragmentos.';
-                                    statusMessage.className = 'message info';
+                                    statusMessage.className = 'alert alert-info'; // Clases de Bootstrap para alertas
                                 }
                             } catch (e) {
                                 console.error("Error parsing fragments JSON:", e, fragmentsJsonString);
                                 statusMessage.textContent = "Error al procesar la lista de fragmentos.";
-                                statusMessage.className = 'message error';
+                                statusMessage.className = 'alert alert-danger'; // Clases de Bootstrap para alertas
                             }
                         }
                     }
@@ -199,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error durante la carga o el streaming:', error);
             statusMessage.textContent = 'Error de red o del servidor. Inténtalo de nuevo.';
-            statusMessage.className = 'message error';
+            statusMessage.className = 'alert alert-danger'; // Clases de Bootstrap para alertas
         } finally {
             splitButton.disabled = false;
         }

@@ -4,77 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Divisor de Videos</title>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1>Global Ads Agency</h1>
+    <div class="container-fluid"> <div class="row flex-nowrap"> <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark sidebar-custom"> <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                    <a href="/" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                        <span class="fs-5 d-none d-sm-inline">Global Ads Agency</span> </a>
+                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link px-0 text-white active">
+                                <i class="fs-4 bi-house"></i> <span class="ms-1 d-none d-sm-inline">Dividir Video</span>
+                            </a>
+                        </li>
+                        </ul>
+                    <hr>
+                    </div>
             </div>
-            <nav class="sidebar-menu">
-                <h3>Navegación</h3>
-                <ul>
-                    <li><a href="#" class="active">Dividir Video</a></li>
-                    </ul>
-            </nav>
-        </aside>
 
-        <main class="content">
-            <header class="content-header">
-                <h2>Dividir Video</h2>
-            </header>
+            <div class="col py-3"> <header class="mb-4">
+                    <h2 class="display-4">Dividir Video</h2>
+                </header>
 
-            <section>
-                <p class="section-description">
-                    Sube un video y especifica la duración de los segmentos para dividirlo.
-                </p>
+                <section class="mb-5">
+                    <p class="lead">
+                        Sube un video y especifica la duración de los segmentos para dividirlo.
+                        Una vez procesado, podrás descargar los fragmentos individualmente o todos en un archivo ZIP.
+                    </p>
 
-                <form id="uploadForm">
-                    <div class="input-group">
-                        <label for="videoFile">Selecciona un video:</label>
-                        <input type="file" id="videoFile" name="video" accept="video/*" required>
+                    <form id="uploadForm" class="p-4 border rounded shadow-sm bg-light">
+                        <div class="mb-3">
+                            <label for="videoFile" class="form-label">Selecciona un video:</label>
+                            <input type="file" class="form-control" id="videoFile" name="video" accept="video/*" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="segmentDuration" class="form-label">Duración de cada segmento (segundos):</label>
+                            <input type="number" class="form-control" id="segmentDuration" name="segment_duration" min="1" value="60" required>
+                        </div>
+                        <div class="d-grid"> <button type="submit" id="splitButton" class="btn btn-primary btn-lg">Dividir Video</button>
+                        </div>
+                    </form>
+
+                    <div id="progressContainer" class="mt-4 p-4 border rounded shadow-sm bg-light" style="display:none;">
+                        <p id="progressMessage" class="fw-bold mb-2"></p>
+                        <div class="progress" role="progressbar" aria-label="Progreso general" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height: 25px;">
+                            <div class="progress-bar" id="progressBar" style="width: 0%;">0%</div>
+                        </div>
+                        <p id="overallProgressText" class="text-muted mt-2"></p>
                     </div>
-                    <div class="input-group">
-                        <label for="segmentDuration">Duración de cada segmento (segundos):</label>
-                        <input type="number" id="segmentDuration" name="segment_duration" min="1" value="60" required>
-                    </div>
-                    <div class="button-container">
-                        <button type="submit" id="splitButton">Dividir Video</button>
-                    </div>
-                </form>
 
-                <div id="progressContainer" class="progress-container" style="display:none;">
-                    <p id="progressMessage"></p>
-                    <div class="progress-bar-background">
-                        <div class="progress-bar" id="progressBar"></div>
-                    </div>
-                    <p id="overallProgressText" class="overall-progress-text"></p>
-                </div>
+                    <div id="statusMessage" class="alert mt-3" role="alert"></div>
+                </section>
 
-                <div id="statusMessage" class="message"></div>
-            </section>
+                <section id="downloadArea" style="display:none;">
+                    <h3 class="mb-3">Descargar Fragmentos</h3>
+                    
+                    <div id="downloadButtons" class="d-grid gap-2 d-md-block mb-4"> </div>
+                    <p id="downloadMessage" class="text-muted mb-4">Haz clic para descargar los fragmentos.</p>
 
-            <section id="downloadArea" style="display:none;">
-                <h3>Descargar Fragmentos</h3>
-                
-                <div id="downloadButtons" class="button-container" style="display:none;">
-                    <button id="downloadAllButton">Descargar Todos (ZIP)</button>
-                    <button id="downloadAllIndividual">Descargar Todos Individualmente</button>
-                </div>
-                <p id="downloadMessage" style="display:none;">Haz clic para descargar los fragmentos.</p>
-
-                <h4>Vista Previa de Fragmentos</h4>
-                <div id="fragmentPreviews" class="fragment-grid">
-                    </div>
-            </section>
-        </main>
+                    <h4 class="mb-3">Vista Previa de Fragmentos</h4>
+                    <div id="fragmentPreviews" class="row row-cols-3 g-4">
+                        </div>
+                </section>
+            </div>
+        </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 Divisor de Videos. Todos los derechos reservados.</p>
+    <footer class="mt-5 py-3 bg-dark text-white text-center">
+        <p class="mb-0">Global Ads Agency&copy; 2025. Todos los derechos reservados.</p>
     </footer>
 
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
