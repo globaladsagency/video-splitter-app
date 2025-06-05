@@ -28,7 +28,6 @@
             <section>
                 <p class="section-description">
                     Sube un video y especifica la duración de los segmentos para dividirlo.
-                    Una vez procesado, podrás descargar los fragmentos individualmente o todos en un archivo ZIP.
                 </p>
 
                 <form id="uploadForm">
@@ -58,11 +57,16 @@
 
             <section id="downloadArea" style="display:none;">
                 <h3>Descargar Fragmentos</h3>
-                <div id="fragmentList">
-                    </div>
+                
                 <div id="downloadButtons" class="button-container" style="display:none;">
-                    </div>
+                    <button id="downloadAllButton">Descargar Todos (ZIP)</button>
+                    <button id="downloadAllIndividual">Descargar Todos Individualmente</button>
+                </div>
                 <p id="downloadMessage" style="display:none;">Haz clic para descargar los fragmentos.</p>
+
+                <h4>Vista Previa de Fragmentos</h4>
+                <div id="fragmentPreviews" class="fragment-grid">
+                    </div>
             </section>
         </main>
     </div>

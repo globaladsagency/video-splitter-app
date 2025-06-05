@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM esté cargado
+document.addEventListener('DOMContentLoaded', () => {
     const uploadForm = document.getElementById('uploadForm');
     if (!uploadForm) {
         console.error("El formulario de carga no se encontró. Asegúrate de que index.html esté cargado.");
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM est�
         const formData = new FormData(form);
         const splitButton = document.getElementById('splitButton');
         const statusMessage = document.getElementById('statusMessage');
-        const fragmentList = document.getElementById('fragmentList');
+        // const fragmentList = document.getElementById('fragmentList'); // Ya no usaremos este para los enlaces directos
         const progressContainer = document.getElementById('progressContainer');
         const progressMessage = document.getElementById('progressMessage');
         const progressBar = document.getElementById('progressBar');
@@ -20,12 +20,14 @@ document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM est�
         const downloadArea = document.getElementById('downloadArea'); 
         const downloadButtonsContainer = document.getElementById('downloadButtons'); 
         const downloadMessage = document.getElementById('downloadMessage'); 
+        const fragmentPreviewsContainer = document.getElementById('fragmentPreviews'); // NUEVO: Contenedor de vistas previas
 
         // Resetear UI al inicio de un nuevo procesamiento
         statusMessage.textContent = 'Iniciando procesamiento...';
         statusMessage.className = 'message info';
-        fragmentList.innerHTML = ''; // Limpiar lista de fragmentos anteriores
-        downloadButtonsContainer.innerHTML = ''; // Limpiar botones de descarga anteriores
+        // fragmentList.innerHTML = ''; // Limpiar lista de fragmentos anteriores (si la usabas)
+        fragmentPreviewsContainer.innerHTML = ''; // Limpiar vistas previas anteriores
+        downloadButtonsContainer.innerHTML = ''; // Limpiar botones de descarga anteriores (se recrearán)
         splitButton.disabled = true; // Deshabilitar botón de dividir
         downloadArea.style.display = 'none'; // Ocultar área de descarga
         downloadButtonsContainer.style.display = 'none'; // Ocultar contenedor de botones
@@ -76,10 +78,8 @@ document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM est�
                             progressMessage.textContent = data.substring(8).trim();
                         } else if (data.startsWith('overall_progress:')) {
                             let percentage = parseFloat(data.substring(17).trim());
-                            // Asegura que el porcentaje esté entre 0 y 100
                             percentage = Math.max(0, Math.min(100, percentage)); 
                             progressBar.style.width = `${percentage}%`;
-                            // Asegura que el texto se vea bien (redondea a un entero)
                             progressBar.textContent = `${percentage.toFixed(0)}%`; 
                             overallProgressText.textContent = `${percentage.toFixed(0)}% Completado`;
                             
@@ -91,31 +91,48 @@ document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM est�
                             statusMessage.textContent = `Error durante el procesamiento: ${data.substring(6).trim()}`;
                             statusMessage.className = 'message error';
                             progressContainer.style.display = 'none';
-                            reader.cancel(); // Detener la lectura del stream en caso de error
+                            reader.cancel(); 
                             break; 
                         } else if (data.startsWith('fragments:')) {
                             const fragmentsJsonString = data.substring(10).trim();
                             try {
                                 const fragments = JSON.parse(fragmentsJsonString);
                                 if (fragments && fragments.length > 0) {
-                                    fragmentList.innerHTML = ''; 
+                                    // fragmentList.innerHTML = ''; // Ya no usamos esto
+                                    fragmentPreviewsContainer.innerHTML = ''; // Limpiar por si acaso
                                     downloadArea.style.display = 'block'; 
                                     downloadMessage.style.display = 'block'; 
 
-                                    // Añadir enlaces individuales
+                                    // Crear las vistas previas de los fragmentos en la matriz
                                     fragments.forEach(url => {
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.textContent = url.split('/').pop();
-                                        link.download = url.split('/').pop();
-                                        const p = document.createElement('p');
-                                        p.appendChild(link);
-                                        fragmentList.appendChild(p);
+                                        const fragmentItem = document.createElement('div');
+                                        fragmentItem.className = 'fragment-item';
+
+                                        const videoElement = document.createElement('video');
+                                        videoElement.src = url;
+                                        videoElement.controls = true; // Permite reproducir
+                                        videoElement.preload = 'metadata'; // Carga solo metadatos para vista previa
+                                        videoElement.style.maxWidth = '100%';
+                                        videoElement.style.height = 'auto';
+                                        
+                                        // Opcional: Si quieres un thumbnail en lugar del video completo,
+                                        // podrías pedir a FFmpeg que genere uno y usar <img> aquí.
+                                        // Por ahora, usamos el propio <video> con controls.
+
+                                        const downloadLink = document.createElement('a');
+                                        downloadLink.href = url;
+                                        downloadLink.textContent = url.split('/').pop(); // Muestra solo el nombre del archivo
+                                        downloadLink.download = url.split('/').pop(); // Para la descarga
+
+                                        fragmentItem.appendChild(videoElement);
+                                        fragmentItem.appendChild(downloadLink);
+                                        fragmentPreviewsContainer.appendChild(fragmentItem);
                                     });
+
 
                                     // Crear y añadir el botón de Descargar Todos (ZIP)
                                     const downloadAllZipBtn = document.createElement('button');
-                                    downloadAllZipBtn.id = 'downloadAllButton'; // Usar ID de tu CSS
+                                    downloadAllZipBtn.id = 'downloadAllButton'; 
                                     downloadAllZipBtn.textContent = 'Descargar Todos (ZIP)';
                                     downloadAllZipBtn.addEventListener('click', async () => {
                                         const filenames = fragments.map(url => url.split('/').pop());
@@ -148,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM est�
 
                                     // Crear y añadir el botón para descargar todos individualmente
                                     const downloadAllIndividualBtn = document.createElement('button');
-                                    downloadAllIndividualBtn.id = 'downloadAllIndividual'; // Usar ID de tu CSS
+                                    downloadAllIndividualBtn.id = 'downloadAllIndividual'; 
                                     downloadAllIndividualBtn.textContent = 'Descargar Todos Individualmente';
                                     downloadAllIndividualBtn.addEventListener('click', () => {
                                         alert('La descarga de fragmentos individuales ha comenzado. Revisa tu carpeta de descargas.');
