@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Resetear UI al inicio de un nuevo procesamiento
         statusMessage.textContent = 'Iniciando procesamiento...';
         statusMessage.className = 'alert alert-info'; // Clases de Bootstrap para alertas
-        fragmentPreviewsContainer.innerHTML = ''; 
-        downloadButtonsContainer.innerHTML = ''; 
+        fragmentPreviewsContainer.innerHTML = ''; // <<-- ESTA LÍNEA LIMPIA LAS VISTAS PREVIAS
+        downloadButtonsContainer.innerHTML = ''; // <<-- ESTA LÍNEA LIMPIA LOS BOTONES DE DESCARGA (ZIP, Individual)
         splitButton.disabled = true; 
-        downloadArea.style.display = 'none'; 
+        downloadArea.style.display = 'none'; // <<-- ESTA LÍNEA OCULTA EL ÁREA COMPLETA DE DESCARGA Y VISTAS PREVIAS
         downloadMessage.style.display = 'none'; 
 
         // Mostrar contenedor de progreso e inicializar
@@ -100,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             try {
                                 const fragments = JSON.parse(fragmentsJsonString);
                                 if (fragments && fragments.length > 0) {
-                                    fragmentPreviewsContainer.innerHTML = ''; 
-                                    downloadArea.style.display = 'block'; 
+                                    fragmentPreviewsContainer.innerHTML = ''; // Asegura que las vistas previas antiguas se eliminen
+                                    downloadArea.style.display = 'block'; // Muestra el área de descarga
                                     downloadMessage.style.display = 'block'; 
 
                                     // Crear las vistas previas de los fragmentos en la matriz
@@ -121,19 +121,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                         videoElement.style.height = 'auto';
                                         
                                         const cardBodyDiv = document.createElement('div');
-                                        cardBodyDiv.className = 'card-body d-flex flex-column justify-content-between'; // Clases de Bootstrap
+                                        cardBodyDiv.className = 'card-body d-flex flex-column justify-content-between'; // Clases de Bootstrap para un buen diseño
 
-                                        // --- Lógica para el nombre del fragmento ---
+                                        // --- Lógica para el nombre del fragmento (Parte X) ---
                                         const partNumber = index + 1; // Para que empiece en 1, no en 0
                                         const displayFileName = `Parte ${partNumber}`; // Texto para mostrar al usuario (ej. "Parte 1")
                                         const actualFileName = url.split('/').pop(); // Nombre original para la descarga (ej. "fragment_1.mp4")
-                                        // ------------------------------------------
+                                        // ---------------------------------------------------
 
                                         const downloadLink = document.createElement('a');
                                         downloadLink.href = url;
                                         downloadLink.textContent = displayFileName; // Usa el texto amigable
-                                        downloadLink.download = actualFileName; // Mantiene el nombre original para la descarga
-                                        downloadLink.className = 'btn btn-sm btn-outline-secondary mt-auto'; // Clases de Bootstrap para el botón de descarga
+                                        downloadLink.download = actualFileName; // Mantiene el nombre original para la descarga del archivo
+                                        downloadLink.className = 'btn btn-sm btn-outline-secondary mt-auto'; // Clases de Bootstrap para el botón de descarga, mt-auto lo empuja hacia abajo
 
                                         cardBodyDiv.appendChild(downloadLink);
                                         cardDiv.appendChild(videoElement);
