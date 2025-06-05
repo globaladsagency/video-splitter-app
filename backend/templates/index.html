@@ -3,54 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ads Agency</title>
+    <title>Divisor de Videos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 <body>
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h1>Global Ads Agency</h1>
+                <h1>Video Splitter</h1>
             </div>
-            <div class="sidebar-menu">
-                <h3>Herramientas de Video</h3>
+            <nav class="sidebar-menu">
+                <h3>Navegación</h3>
                 <ul>
-                    <li><a href="#dividir-historias" class="active">Dividir Historias</a></li>
-                </ul>
-            </div>
+                    <li><a href="#" class="active">Dividir Video</a></li>
+                    </ul>
+            </nav>
         </aside>
+
         <main class="content">
             <header class="content-header">
-                <h2>Dividir Historias</h2>
+                <h2>Dividir Video</h2>
             </header>
-            <section id="dividir-historias" class="active-section">
-                <p class="section-description">Selecciona un video y la duración de los fragmentos para dividirlo.</p>
-                <div class="input-group">
-                    <label for="videoInput">Seleccionar Video:</label>
-                    <input type="file" id="videoInput" accept="video/*">
-                </div>
-                <div class="input-group">
-                    <label for="segmentDuration">Duración del fragmento (segundos):</label>
-                    <input type="number" id="segmentDuration" value="10">
-                </div>
-                <div class="button-container">
-                    <button id="splitButton" disabled>Dividir Video</button>
-                </div>
-                <div id="downloadArea">
-                    <h3>Descargar Fragmentos:</h3>
-                    <p id="downloadMessage"></p>
-                    <div class="button-container">
-                        <button id="downloadAllButton" disabled>Descargar Todos (ZIP)</button>
-                        <button id="downloadAllIndividual" disabled>Descargar Todos (Individual)</button>
+
+            <section>
+                <p class="section-description">
+                    Sube un video y especifica la duración de los segmentos para dividirlo.
+                    Una vez procesado, podrás descargar los fragmentos individualmente o todos en un archivo ZIP.
+                </p>
+
+                <form id="uploadForm">
+                    <div class="input-group">
+                        <label for="videoFile">Selecciona un video:</label>
+                        <input type="file" id="videoFile" name="video" accept="video/*" required>
                     </div>
+                    <div class="input-group">
+                        <label for="segmentDuration">Duración de cada segmento (segundos):</label>
+                        <input type="number" id="segmentDuration" name="segment_duration" min="1" value="60" required>
+                    </div>
+                    <div class="button-container">
+                        <button type="submit" id="splitButton">Dividir Video</button>
+                    </div>
+                </form>
+
+                <div id="progressContainer" class="progress-container" style="display:none;">
+                    <p id="progressMessage"></p>
+                    <div class="progress-bar-background">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <p id="overallProgressText" class="overall-progress-text"></p>
                 </div>
+
+                <div id="statusMessage" class="message"></div>
+            </section>
+
+            <section id="downloadArea" style="display:none;">
+                <h3>Descargar Fragmentos</h3>
+                <div id="fragmentList">
+                    </div>
+                <div id="downloadButtons" class="button-container" style="display:none;">
+                    </div>
+                <p id="downloadMessage" style="display:none;">Haz clic para descargar los fragmentos.</p>
             </section>
         </main>
     </div>
 
     <footer>
-        <p>&copy; 2025 Global Ads Agency</p>
+        <p>&copy; 2025 Divisor de Videos. Todos los derechos reservados.</p>
     </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

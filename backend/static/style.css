@@ -235,3 +235,74 @@ footer {
     position: fixed;
     bottom: 0;
 }
+/* ... tus estilos existentes ... */
+
+/* Estilos para la barra de progreso */
+.progress-container {
+    margin-top: 20px;
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.progress-container p {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.progress-bar-background {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+    height: 25px; /* Altura de la barra de progreso */
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #007bff; /* Color azul para la barra */
+    color: white;
+    text-align: center;
+    line-height: 25px; /* Centra el texto verticalmente */
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out; /* Transición suave del ancho */
+    font-weight: bold;
+    white-space: nowrap; /* Evita que el texto se rompa */
+    overflow: hidden; /* Oculta el texto si la barra es muy pequeña */
+}
+
+.overall-progress-text {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* ... y los estilos para los botones de descarga ... */
+#downloadAllButton,
+#downloadAllIndividual {
+    padding: 14px 30px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease;
+}
+
+#downloadAllButton:hover,
+#downloadAllIndividual:hover {
+    background-color: #2980b9;
+}
+
+#downloadAllButton:disabled,
+#downloadAllIndividual:disabled {
+    background-color: #ddd;
+    color: #777;
+    cursor: not-allowed;
+}

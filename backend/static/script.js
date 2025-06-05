@@ -1,149 +1,190 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const navLinks = document.querySelectorAll('nav a');
-    const sections = document.querySelectorAll('main section');
+document.addEventListener('DOMContentLoaded', () => { // Asegura que el DOM esté cargado
+    const uploadForm = document.getElementById('uploadForm');
+    if (!uploadForm) {
+        console.error("El formulario de carga no se encontró. Asegúrate de que index.html esté cargado.");
+        return;
+    }
 
-    // Aquí iría tu código existente para la navegación si lo tienes
-    // Por ejemplo:
-    navLinks.forEach(link => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const targetId = link.getAttribute('href').substring(1); // Obtener 'dividir-historias'
-            sections.forEach(section => {
-                if (section.id === targetId) {
-                    section.classList.add('active-section');
-                } else {
-                    section.classList.remove('active-section');
-                }
-            });
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            link.classList.add('active');
-        });
-    });
+    uploadForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
 
+        const form = event.target;
+        const formData = new FormData(form);
+        const splitButton = document.getElementById('splitButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const fragmentList = document.getElementById('fragmentList');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressMessage = document.getElementById('progressMessage');
+        const progressBar = document.getElementById('progressBar');
+        const overallProgressText = document.getElementById('overallProgressText');
+        const downloadArea = document.getElementById('downloadArea'); 
+        const downloadButtonsContainer = document.getElementById('downloadButtons'); 
+        const downloadMessage = document.getElementById('downloadMessage'); 
 
-    // --- Funcionalidad de Dividir Historias ---
-    const videoInput = document.getElementById('videoInput');
-    const segmentDurationInput = document.getElementById('segmentDuration');
-    const splitButton = document.getElementById('splitButton');
-    const downloadArea = document.getElementById('downloadArea');
-    const downloadMessage = document.getElementById('downloadMessage');
-    const downloadAllButton = document.getElementById('downloadAllButton');
-    const downloadAllIndividualButton = document.getElementById('downloadAllIndividual'); // Nuevo botón
+        // Resetear UI al inicio de un nuevo procesamiento
+        statusMessage.textContent = 'Iniciando procesamiento...';
+        statusMessage.className = 'message info';
+        fragmentList.innerHTML = ''; // Limpiar lista de fragmentos anteriores
+        downloadButtonsContainer.innerHTML = ''; // Limpiar botones de descarga anteriores
+        splitButton.disabled = true; // Deshabilitar botón de dividir
+        downloadArea.style.display = 'none'; // Ocultar área de descarga
+        downloadButtonsContainer.style.display = 'none'; // Ocultar contenedor de botones
+        downloadMessage.style.display = 'none'; // Ocultar mensaje de descarga
 
-    let uploadedVideoFile = null;
-    let fragmentFilenames = [];
-    let fragmentURLs = []; // Para almacenar las URLs de descarga
-
-    videoInput.addEventListener('change', (event) => {
-        uploadedVideoFile = event.target.files[0];
-        splitButton.disabled = !uploadedVideoFile;
-        downloadAllButton.disabled = true;
-        downloadAllIndividualButton.disabled = true; // Deshabilitar también este botón
-        downloadMessage.textContent = '';
-    });
-
-    splitButton.addEventListener('click', async () => {
-        if (!uploadedVideoFile) {
-            alert('Por favor, selecciona un video primero.');
-            return;
-        }
-
-        const segmentDuration = parseInt(segmentDurationInput.value, 10);
-        if (isNaN(segmentDuration) || segmentDuration <= 0) {
-            alert('Por favor, introduce una duración de fragmento válida.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('video', uploadedVideoFile);
-        formData.append('segment_duration', segmentDuration);
+        // Mostrar contenedor de progreso e inicializar
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        overallProgressText.textContent = '0% Completado';
+        progressMessage.textContent = 'Preparando...';
 
         try {
-            // ¡IMPORTANTE!: CAMBIO A URL RELATIVA PARA EL DESPLIEGUE
-            // La URL relativa '/api/split_video' apuntará al mismo host donde se sirve el frontend
-            const response = await fetch('/api/split_video', { 
+            const response = await fetch('/api/split_video', {
                 method: 'POST',
                 body: formData
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                fragmentFilenames = data.fragment_filenames || [];
-                fragmentURLs = data.fragment_urls || []; // Guardar las URLs
-                downloadMessage.textContent = `${fragmentFilenames.length} fragmentos generados.`;
-                downloadAllButton.disabled = fragmentFilenames.length === 0;
-                downloadAllIndividualButton.disabled = fragmentFilenames.length === 0; // Habilitar el nuevo botón
-            } else {
+            if (!response.ok) {
                 const errorData = await response.json();
-                alert(`Error al dividir el video: ${errorData.error || 'Error desconocido'}`);
-                downloadAllButton.disabled = true;
-                downloadAllIndividualButton.disabled = true;
-                downloadMessage.textContent = 'Error al generar los fragmentos.';
+                statusMessage.textContent = `Error al iniciar el procesamiento: ${errorData.error || 'Desconocido'}`;
+                statusMessage.className = 'message error';
+                progressContainer.style.display = 'none'; // Ocultar barra de progreso en caso de error inicial
+                splitButton.disabled = false;
+                return;
             }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
 
-        } catch (error) {
-            console.error('Error de red:', error);
-            alert('Ocurrió un error al comunicarse con el servidor.');
-            downloadAllButton.disabled = true;
-            downloadAllIndividualButton.disabled = true;
-            downloadMessage.textContent = 'Error de conexión con el servidor.';
-        }
-    });
-
-    // --- Funcionalidad de Descargar Todos (ZIP) ---
-    downloadAllButton.addEventListener('click', async () => {
-        if (fragmentFilenames.length > 0) {
-            try {
-                // ¡IMPORTANTE!: CAMBIO A URL RELATIVA PARA EL DESPLIEGUE
-                // La URL relativa '/api/download_all' apuntará al mismo host donde se sirve el frontend
-                const response = await fetch('/api/download_all', { 
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ filenames: fragmentFilenames }),
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'fragmentos.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                } else {
-                    const errorData = await response.json();
-                    alert(`Error al descargar todos los fragmentos (ZIP): ${errorData.error || 'Error desconocido'}`);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    console.log("Stream complete");
+                    break;
                 }
 
-            } catch (error) {
-                console.error('Error al descargar todos (ZIP):', error);
-                alert('Ocurrió un error al descargar todos los fragmentos (ZIP).');
-            }
-        } else {
-            alert('No hay fragmentos para descargar.');
-        }
-    });
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split('\n\n');
+                buffer = events.pop(); // Guarda la última parte incompleta
 
-    // --- Funcionalidad de Descargar Todos (Individual) (Secuencial Asíncrono) ---
-    downloadAllIndividualButton.addEventListener('click', async () => {
-        if (fragmentURLs.length > 0) {
-            alert('Iniciando descarga individual de fragmentos. Por favor, espere...');
-            for (const url of fragmentURLs) {
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = url.substring(url.lastIndexOf('/') + 1);
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo entre descargas
+                for (const eventString of events) {
+                    if (eventString.startsWith('data:')) {
+                        let data = eventString.substring(5).trim();
+                        
+                        if (data.startsWith('message:')) {
+                            progressMessage.textContent = data.substring(8).trim();
+                        } else if (data.startsWith('overall_progress:')) {
+                            let percentage = parseFloat(data.substring(17).trim());
+                            // Asegura que el porcentaje esté entre 0 y 100
+                            percentage = Math.max(0, Math.min(100, percentage)); 
+                            progressBar.style.width = `${percentage}%`;
+                            // Asegura que el texto se vea bien (redondea a un entero)
+                            progressBar.textContent = `${percentage.toFixed(0)}%`; 
+                            overallProgressText.textContent = `${percentage.toFixed(0)}% Completado`;
+                            
+                            if (percentage >= 100) {
+                                statusMessage.textContent = 'Proceso completado. Obteniendo fragmentos...';
+                                statusMessage.className = 'message success';
+                            }
+                        } else if (data.startsWith('error:')) {
+                            statusMessage.textContent = `Error durante el procesamiento: ${data.substring(6).trim()}`;
+                            statusMessage.className = 'message error';
+                            progressContainer.style.display = 'none';
+                            reader.cancel(); // Detener la lectura del stream en caso de error
+                            break; 
+                        } else if (data.startsWith('fragments:')) {
+                            const fragmentsJsonString = data.substring(10).trim();
+                            try {
+                                const fragments = JSON.parse(fragmentsJsonString);
+                                if (fragments && fragments.length > 0) {
+                                    fragmentList.innerHTML = ''; 
+                                    downloadArea.style.display = 'block'; 
+                                    downloadMessage.style.display = 'block'; 
+
+                                    // Añadir enlaces individuales
+                                    fragments.forEach(url => {
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.textContent = url.split('/').pop();
+                                        link.download = url.split('/').pop();
+                                        const p = document.createElement('p');
+                                        p.appendChild(link);
+                                        fragmentList.appendChild(p);
+                                    });
+
+                                    // Crear y añadir el botón de Descargar Todos (ZIP)
+                                    const downloadAllZipBtn = document.createElement('button');
+                                    downloadAllZipBtn.id = 'downloadAllButton'; // Usar ID de tu CSS
+                                    downloadAllZipBtn.textContent = 'Descargar Todos (ZIP)';
+                                    downloadAllZipBtn.addEventListener('click', async () => {
+                                        const filenames = fragments.map(url => url.split('/').pop());
+                                        try {
+                                            const zipResponse = await fetch('/api/download_all', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ filenames: filenames })
+                                            });
+                                            if (zipResponse.ok) {
+                                                const blob = await zipResponse.blob();
+                                                const url = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.style.display = 'none';
+                                                a.href = url;
+                                                a.download = 'fragmentos.zip';
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                window.URL.revokeObjectURL(url);
+                                            } else {
+                                                const zipError = await zipResponse.json();
+                                                alert(`Error al descargar ZIP: ${zipError.error || 'Desconocido'}`);
+                                            }
+                                        } catch (zipFetchError) {
+                                            console.error('Error al solicitar ZIP:', zipFetchError);
+                                            alert('Error de red al intentar descargar el ZIP.');
+                                        }
+                                    });
+                                    downloadButtonsContainer.appendChild(downloadAllZipBtn);
+
+                                    // Crear y añadir el botón para descargar todos individualmente
+                                    const downloadAllIndividualBtn = document.createElement('button');
+                                    downloadAllIndividualBtn.id = 'downloadAllIndividual'; // Usar ID de tu CSS
+                                    downloadAllIndividualBtn.textContent = 'Descargar Todos Individualmente';
+                                    downloadAllIndividualBtn.addEventListener('click', () => {
+                                        alert('La descarga de fragmentos individuales ha comenzado. Revisa tu carpeta de descargas.');
+                                        fragments.forEach(url => {
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = url.split('/').pop(); 
+                                            document.body.appendChild(a); 
+                                            a.click(); 
+                                            document.body.removeChild(a); 
+                                        });
+                                    });
+                                    downloadButtonsContainer.appendChild(downloadAllIndividualBtn);
+                                    
+                                    downloadButtonsContainer.style.display = 'flex'; // Mostrar el contenedor de botones
+                                    
+                                } else {
+                                    statusMessage.textContent = 'Proceso completado, pero no se generaron fragmentos.';
+                                    statusMessage.className = 'message info';
+                                }
+                            } catch (e) {
+                                console.error("Error parsing fragments JSON:", e, fragmentsJsonString);
+                                statusMessage.textContent = "Error al procesar la lista de fragmentos.";
+                                statusMessage.className = 'message error';
+                            }
+                        }
+                    }
+                }
             }
-            alert('Descarga individual de todos los fragmentos completada.');
-        } else {
-            alert('No hay fragmentos para descargar.');
+            
+        } catch (error) {
+            console.error('Error durante la carga o el streaming:', error);
+            statusMessage.textContent = 'Error de red o del servidor. Inténtalo de nuevo.';
+            statusMessage.className = 'message error';
+        } finally {
+            splitButton.disabled = false;
         }
     });
 });
