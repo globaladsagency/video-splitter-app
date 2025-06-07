@@ -133,23 +133,21 @@ def upload_and_split():
                         with app_instance_for_context.app_context(): 
                             with app_instance_for_context.test_request_context(): 
                                 if fragment_filenames:
-                                    fragment_urls_with_names = []
-                                    for fname in fragment_filenames:
-                                                # Genera URLs relativas a la raíz de la aplicación. _external=False es CRUCIAL.
-                                                # 'splitter' es el nombre de tu Blueprint (splitter_bp = Blueprint('splitter', __name__))
-                                                # 'download_fragment' es el nombre de la función de la ruta @splitter_bp.route('/download_fragment/<filename>')
-                                                download_url = url_for('splitter.download_fragment', filename=fname, _external=False) # Copia esta línea EXACTA como la tengas
+                                            fragment_urls_with_names = []
+                                            for fname in fragment_filenames:
+                                                # *** IMPORTANTE: _external=False asegura que sea una URL RELATIVA ***
+                                                # Esto hace que el navegador use el mismo 'https://' de la página actual.
+                                                download_url = url_for('splitter.download_fragment', filename=fname, _external=False)
                                                 
-                                                # 'static' es el endpoint para servir archivos estáticos (que Flask crea automáticamente)
-                                                # 'fragments/{fname}' es la ruta relativa dentro de tu carpeta 'static'
+                                                # Para las URLs estáticas (previsualización), también debe ser RELATIVA.
                                                 preview_url = url_for('static', filename=f"fragments/{fname}", _external=False)
                                                 
                                                 fragment_urls_with_names.append({"download_url": download_url, "preview_url": preview_url, "filename": fname})
-                                    yield f"data: overall_progress: 100.00\n\n" 
-                                    # Mantenemos json.dumps() aquí, ya que url_for ya tiene su contexto.
-                                    yield f"data: fragments:{json.dumps(fragment_urls_with_names)}\n\n"
+
+                                            yield f"data: overall_progress: 100.00\\n\\n" 
+                                            yield f"data: fragments:{json.dumps(fragment_urls_with_names)}\\n\\n"
                                 else:
-                                    yield f"data: error: Error al dividir el video o no se generaron fragmentos.\n\n"
+                                            yield f"data: error: Error al dividir el video o no se generaron fragmentos.\\n\\n"
                         break 
                     except queue.Empty:
                         print("Advertencia: Procesamiento terminado, pero no se recibieron los fragmentos finales a tiempo.")

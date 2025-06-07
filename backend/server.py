@@ -215,7 +215,7 @@ def upload_and_split():
                         with app.app_context(): # IMPORTE: Envolver url_for en el contexto de la aplicación
                             if fragment_filenames:
                                 fragment_urls = [
-                                    url_for('download_fragment', filename=fname, _external=True)
+                                    url_for('download_fragment', filename=fname, _external=False)
                                     for fname in fragment_filenames
                                 ]
                                 # Envía el 100% y luego los fragmentos
