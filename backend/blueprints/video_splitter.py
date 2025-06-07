@@ -138,7 +138,7 @@ def upload_and_split():
                                                 # Genera URLs relativas a la raíz de la aplicación. _external=False es CRUCIAL.
                                                 # 'splitter' es el nombre de tu Blueprint (splitter_bp = Blueprint('splitter', __name__))
                                                 # 'download_fragment' es el nombre de la función de la ruta @splitter_bp.route('/download_fragment/<filename>')
-                                                download_url = url_for('splitter.download_fragment', filename=fname, _external=False)
+                                                download_url = url_for('splitter.download_fragment', filename=fname, _external=False) # Copia esta línea EXACTA como la tengas
                                                 
                                                 # 'static' es el endpoint para servir archivos estáticos (que Flask crea automáticamente)
                                                 # 'fragments/{fname}' es la ruta relativa dentro de tu carpeta 'static'
