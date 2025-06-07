@@ -23,7 +23,7 @@ CORS(app)
 
 # AÑADE ESTAS LÍNEAS AQUÍ:
 app.config['SERVER_NAME'] = 'global-ads-agency.onrender.com' # O la IP/dominio donde se ejecuta tu servidor (ej. 'yourdomain.com:5000')
-app.config['PREFERRED_URL_SCHEME'] = 'http' # O 'https' si estás usando HTTPS
+app.config['PREFERRED_URL_SCHEME'] = 'https' # O 'https' si estás usando HTTPS
 # FIN DE LAS LÍNEAS A AÑADIR
 app.secret_key = 'eb243c1aa0cd5ca592ba26c466e1ee0c' # ¡ADVERTENCIA!: CAMBIA ESTO EN PRODUCCIÓN
 
