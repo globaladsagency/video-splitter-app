@@ -135,10 +135,16 @@ def upload_and_split():
                                 if fragment_filenames:
                                     fragment_urls_with_names = []
                                     for fname in fragment_filenames:
-                                        download_url = url_for('splitter.download_fragment', filename=fname, _external=True)
-                                        preview_url = url_for('static', filename=f"fragments/{fname}") 
-                                        fragment_urls_with_names.append({"download_url": download_url, "preview_url": preview_url, "filename": fname})
-                                    
+                                                # Genera URLs relativas a la raíz de la aplicación. _external=False es CRUCIAL.
+                                                # 'splitter' es el nombre de tu Blueprint (splitter_bp = Blueprint('splitter', __name__))
+                                                # 'download_fragment' es el nombre de la función de la ruta @splitter_bp.route('/download_fragment/<filename>')
+                                                download_url = url_for('splitter.download_fragment', filename=fname, _external=False)
+                                                
+                                                # 'static' es el endpoint para servir archivos estáticos (que Flask crea automáticamente)
+                                                # 'fragments/{fname}' es la ruta relativa dentro de tu carpeta 'static'
+                                                preview_url = url_for('static', filename=f"fragments/{fname}", _external=False)
+                                                
+                                                fragment_urls_with_names.append({"download_url": download_url, "preview_url": preview_url, "filename": fname})
                                     yield f"data: overall_progress: 100.00\n\n" 
                                     # Mantenemos json.dumps() aquí, ya que url_for ya tiene su contexto.
                                     yield f"data: fragments:{json.dumps(fragment_urls_with_names)}\n\n"
