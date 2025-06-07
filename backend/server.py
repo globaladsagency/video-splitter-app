@@ -22,7 +22,7 @@ app = Flask(__name__)
 CORS(app)
 
 # AÑADE ESTAS LÍNEAS AQUÍ:
-app.config['SERVER_NAME'] = '127.0.0.1:5000' # O la IP/dominio donde se ejecuta tu servidor (ej. 'yourdomain.com:5000')
+app.config['SERVER_NAME'] = 'https://global-ads-agency.onrender.com' # O la IP/dominio donde se ejecuta tu servidor (ej. 'yourdomain.com:5000')
 app.config['PREFERRED_URL_SCHEME'] = 'http' # O 'https' si estás usando HTTPS
 # FIN DE LAS LÍNEAS A AÑADIR
 app.secret_key = 'Ryuk1998*' # ¡ADVERTENCIA!: CAMBIA ESTO EN PRODUCCIÓN
