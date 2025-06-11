@@ -1,82 +1,197 @@
-/* Reinicia algunos estilos por si acaso, aunque Bootstrap ya trae un reset */
+/* style.css */
+
+/* General Body Styling */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f2f5;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6; /* Light gray background */
+    color: #333;
+    line-height: 1.6;
     margin: 0;
-    padding: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align items to the top */
+    min-height: 100vh; /* Full viewport height */
+    box-sizing: border-box;
 }
 
-/* Estilos personalizados para el Sidebar (si quieres mantener colores específicos, etc.) */
-.sidebar-custom {
-    background-color: #2c3e50 !important; /* Usamos !important para asegurar que sobrescribe Bootstrap */
-    color: #fff;
+/* Container for the main app content */
+.container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px; /* Max width for readability */
+    margin: 20px 0; /* Add some margin top/bottom */
 }
 
-.sidebar-custom .nav-link.active {
-    background-color: #34495e !important; /* Color de fondo para el ítem activo del menú */
-    border-radius: 0.375rem; /* El radio de Bootstrap */
+/* Header Styling */
+h1 {
+    text-align: center;
+    color: #2c3e50; /* Dark blue/gray */
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 15px;
 }
 
-/* Estilos para el título "Global Ads Agency" en el sidebar si quieres algo específico */
-.sidebar-custom .fs-5 {
+/* Form Styling */
+#uploadForm {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between form groups */
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
     font-weight: bold;
-    color: #ecf0f1; /* Un color ligeramente diferente */
+    color: #555;
 }
 
-/* Ajustes para el contenido principal si lo necesitas, aunque Bootstrap ya maneja mucho */
-.content {
-    background-color: #fff;
-    border-left: 1px solid #eee; /* Mantener el borde del sidebar si te gusta */
+.form-group input[type="file"],
+.form-group input[type="number"] {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
 }
 
-/* Barra de Progreso - Bootstrap tiene sus propias clases, pero si quieres color específico */
-.progress-bar {
-    background-color: #007bff; /* Color azul de Bootstrap por defecto, puedes cambiarlo aquí */
+/* Button Styling */
+button[type="submit"] {
+    background-color: #3498db; /* Blue */
     color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%; /* Full width button */
+}
+
+button[type="submit"]:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+}
+
+.cleanup-btn {
+    background-color: #e74c3c; /* Red */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    display: block; /* Make it a block element */
+    width: fit-content; /* Fit content width */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cleanup-btn:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+/* Progress Bar Styling */
+.progress-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin-top: 20px;
+    overflow: hidden; /* Ensures progress bar doesn't overflow */
+}
+
+.progress-bar {
+    width: 0%;
+    height: 30px;
+    background-color: #4CAF50; /* Green */
+    text-align: center;
+    line-height: 30px; /* Center text vertically */
+    color: white;
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out, background-color 0.3s ease;
+}
+
+/* Status Messages */
+.status-message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #e9ecef; /* Light gray for messages */
+    color: #333;
+    text-align: center;
     font-weight: bold;
+}
+
+/* Results Section Styling */
+#results {
+    margin-top: 30px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 20px;
+}
+
+#results h3 {
     text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
 }
 
-/* Mensajes de estado - Bootstrap tiene .alert-info, .alert-success, .alert-danger */
-/* Puedes mantener tus propios colores si quieres que sean diferentes */
-.alert.info {
-    background-color: #e7f3fe; /* Azul claro */
-    color: #0c5460;
-    border-color: #bee5eb;
-}
-.alert.success {
-    background-color: #d4edda; /* Verde claro */
-    color: #155724;
-    border-color: #c3e6cb;
-}
-.alert.error {
-    background-color: #f8d7da; /* Rojo claro */
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-/* Estilos para la vista previa de fragmentos (ajusta el aspecto de las cards de Bootstrap) */
-.fragment-grid .card { /* Bootstrap usa .card por defecto para elementos como estos */
+.fragment-item {
+    background-color: #f9f9f9;
     border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    text-align: center;
+    text-align: center; /* Center video and link */
 }
 
-.fragment-grid .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.fragment-grid .card video {
+.fragment-item video {
     max-width: 100%;
     height: auto;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px; /* Space between video and download link */
+    background-color: #000; /* Black background for video player */
 }
 
-/* Puedes eliminar la mayoría de tus reglas responsive anteriores, ya que Bootstrap las maneja */
-/* Si tenías reglas específicas para el footer, ajústalas a las nuevas clases de Bootstrap */
-footer p {
-    font-size: 0.9em;
+.fragment-item .download-link {
+    display: inline-block; /* Allows padding and margin */
+    background-color: #28a745; /* Green for download links */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+}
+
+.fragment-item .download-link:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    button[type="submit"],
+    .cleanup-btn {
+        font-size: 1em;
+        padding: 10px 15px;
+    }
 }
